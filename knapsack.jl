@@ -70,7 +70,6 @@ function order_by_items_by(items, key)
         print(valuable_items)
         return valuable_items
     else
-        print("It works!")
         heaviest_items = sort(items, rev=true, by = x -> x[2].ai * x[2].bi * x[2].ci)
         print(heaviest_items)
         return heaviest_items
@@ -89,33 +88,83 @@ function split_in_halves(items)
     return first_half, second_half
 end
 
-function get_largest_and_second_largest_dim(a, b, c)
-    dim_dict = Dict(1 => "ai", 2 => "bi", 3 => "ci")
+function get_largest_to_smallest_dim_list(a, b, c)
     dim = [a, b, c]
     dim_sorted = sort(dim)
     g1 = pop!(dim_sorted)
     g2 = pop!(dim_sorted)
-    g1_idx = getindex(dim, g1)
-    g2_idx = getindex(dim, g2)
-    return dim_dict[g1_idx], g1, dim_dict[g2_idx], g2
+    g3 = pop!(dim_sorted)
+    g1_idx = findall(x->x==g1, dim)[1]
+    dim[g1_idx] = -1
+    g2_idx = findall(x->x==g2, dim)[1]
+    dim[g2_idx] = -1
+    g3_idx = findall(x->x==g3, dim)[1]
+    
+    largest_to_smallest_dim_list = [(g1_idx, g1), (g2_idx, g2), (g3_idx, g3)]
+
+    return largest_to_smallest_dim_list
     
 end
 
-function knapsack_available_space(J, knapsack)
-
+function available_space(corner, knapsack)
+    return (x = knapsack.W - corner.xi, y = knapsack.L - corner.yi, z = knapsack.H - corner.zi)
 end
 
-function add_to_knapsack(item, J, knapsack)
-    if length(J) == 0
-        wi_dim, wi_value, hi_dim, hi_value = get_largest_and_second_largest_dim(item[2].ai, item[2].bi, item[2].ci)
-        J[1] = (item, (xi = 0, yi = 0, zi = 0), (hi = hi_dim, wi = wi_dim))
+function is_enough_space(corner_space, item)
+    item_dims = get_largest_to_smallest_dim_list(item[2].ai, item[2].bi, item[2].ci)
+    space_dims = get_largest_to_smallest_dim_list(corner_space.x, corner_space.y, corner_space.z)
+    enough = true
+    relations = x = [((0,0),(0,0))]
+
+    for i in 1:3
+        space = space_dims[i][2] - item_dims[i][2]
+        if space < 0
+            relation = nothing
+            enough = false
+            break
+        end
+        push!(relations, (space_dims[i], item_dims[i]))
+    end
+    popfirst!(relations)
+    return enough, relations
+end
+
+function order_relations_in_xyz(relations)
+    return sort(relations, by = x -> x[1][1][1])
+end
+
+function get_wi_dim_and_hi_dim(relations)
+    ordered_relations = order_relations_in_xyz(relations)
+    dim_dict = Dict(1 => "ai", 2 => "bi", 3 => "ci")
+    (wi = dim_dict[ordered_relations[1][2][1]], hi = dim_dict[ordered_relations[3][2][1]])
+end
+
+function calculate_new_corners(J, knapsack)
+    return list_of_possible_corners
+end
+
+function add_to_knapsack(item, J, knapsack, list_of_possible_corners)
+    if length(list_of_possible_corners) == 0
+        return 0
+    else
+        for i in 1:length(list_of_possible_corners)
+            corner = list_of_possible_corners[i]
+            corner_space = available_space(corner, knapsack)
+            enough, relations = is_enough_space(corner_space, item)
+            if enough
+                ordered_space_dims = order_relations_in_xyz(relations)
+                wi_hi_dims = get_wi_dim_and_hi_dim(relations)
+                push!(J,(item, (xi = corner.xi, yi = corner.yi, zi = corner.zi), wi_hi_dims))
+            end
+        end
     end
 
 
 end
 
-
-knapsack = (H = 100, W = 100, L = 100)
+knapsack_dim = 100
+knapsack = (H = knapsack_dim, W = knapsack_dim, L = knapsack_dim)
+list_of_possible_corners = [(xi = 0, yi = 0, zi = 0)]
 items = [(vi = 10, dim = (ai = 3, bi = 7, ci = 13)), (vi = 105, dim = (ai = 5, bi = 3, ci = 17)),
          (vi = 20, dim = (ai = 6, bi = 3, ci = 4)), (vi = 95, dim = (ai = 3, bi = 1, ci = 1)),
          (vi = 30, dim = (ai = 9, bi = 5, ci = 9)), (vi = 85, dim = (ai = 6, bi = 7, ci =23)), 
@@ -127,7 +176,8 @@ items = [(vi = 10, dim = (ai = 3, bi = 7, ci = 13)), (vi = 105, dim = (ai = 5, b
          (vi = 90, dim = (ai = 5, bi = 9, ci = 1)), (vi = 25, dim = (ai = 3, bi = 2, ci = 9)), 
          (vi = 100, dim = (ai = 4, bi = 9, ci = 9)), (vi = 15, dim = (ai = 3, bi = 3, ci = 3))]
 V = 0
-J = []
+item_zero = (vi = 0, dim = (ai = 0, bi = 0, ci = 0))
+J = [(item_zero, (xi = 0, yi = 0, zi = 0), (hi = "ai", wi = "bi"))]
 
 
 
