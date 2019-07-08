@@ -133,10 +133,10 @@ function order_relations_in_xyz(relations)
     return sort(relations, by = x -> x[1][1][1])
 end
 
-function get_wi_dim_and_hi_dim(relations)
+function get_hi_dim_and_wi_dim(relations)
     ordered_relations = order_relations_in_xyz(relations)
     dim_dict = Dict(1 => "ai", 2 => "bi", 3 => "ci")
-    (wi = dim_dict[ordered_relations[1][2][1]], hi = dim_dict[ordered_relations[3][2][1]])
+    (hi = dim_dict[ordered_relations[3][2][1]], wi = dim_dict[ordered_relations[1][2][1]])
 end
 
 function calculate_new_corners(J, knapsack)
@@ -153,13 +153,12 @@ function add_to_knapsack(item, J, knapsack, list_of_possible_corners)
             enough, relations = is_enough_space(corner_space, item)
             if enough
                 ordered_space_dims = order_relations_in_xyz(relations)
-                wi_hi_dims = get_wi_dim_and_hi_dim(relations)
-                push!(J,(item, (xi = corner.xi, yi = corner.yi, zi = corner.zi), wi_hi_dims))
+                hi_wi_dims = get_hi_dim_and_wi_dim(relations)
+                push!(J,(item, (xi = corner.xi, yi = corner.yi, zi = corner.zi), hi_wi_dims))
             end
         end
     end
-
-
+    return J
 end
 
 knapsack_dim = 100
@@ -178,6 +177,10 @@ items = [(vi = 10, dim = (ai = 3, bi = 7, ci = 13)), (vi = 105, dim = (ai = 5, b
 V = 0
 item_zero = (vi = 0, dim = (ai = 0, bi = 0, ci = 0))
 J = [(item_zero, (xi = 0, yi = 0, zi = 0), (hi = "ai", wi = "bi"))]
+J = add_to_knapsack(items[1], J, knapsack, list_of_possible_corners)
+popfirst!(J)
+println("J: ")
+println(J)
 
 
 
