@@ -1,13 +1,13 @@
 """ Hello Knapsack Problem:
     
-    - Strategy 1
+    - Strategy 1 [Putting Rock first then later Sand]
     Step1: Order them based on Weight
     Step2: Divide them in half
     Step3: Order each half based on Value
     Step4: Take the heaviest and most valuable until it all fits
     Step5: Take the lightest and most valuable if there is enough space left
 
-    - Strategy 2
+    - Strategy 2 [Alternate between Rock and Sand]
     Step1: Order them based on Weight
     Step2: Divide them in half
     Step3: Order each half based on Value
@@ -63,8 +63,8 @@ Output Format:
 
 """
 
-function order_by_items_by(items, key)
-    if key == "vi"
+function order_items_by(items, key)
+    if key == "value"
         print(items[1].vi)
         valuable_items = sort(items, rev=true, by = x -> x[1])
         print(valuable_items)
@@ -214,7 +214,15 @@ function add_to_knapsack(item, J, knapsack, list_of_possible_corners)
     # return J
 end
 
-knapsack_dim = 10
+function calculate_V_in_J(J)
+    V = 0
+    for i in 1:length(J)
+        V += J[i][1][1]
+    end
+    return V
+end
+
+knapsack_dim = 15
 knapsack = (H = knapsack_dim, W = knapsack_dim, L = knapsack_dim)
 
 items = [(vi = 10, dim = (ai = 3, bi = 7, ci = 13)), (vi = 105, dim = (ai = 5, bi = 3, ci = 17)),
@@ -242,6 +250,78 @@ println(J)
 print("length J: " )
 println(length(J))
 
+"""
+#- Strategy 1 [Putting Rock first then later Sand]
+#    Step1: Order them based on Weight
+items_bigger_to_smaller =  order_items_by(items, "volume")
+#    Step2: Divide them in half
+bigger_half, smaller_half = split_in_halves(items_bigger_to_smaller)
+#    Step3: Order each half based on Value
+bigger_and_valuable = order_items_by(bigger_half, "value")
+smaller_and_valuable = order_items_by(smaller_half, "value")
+#    Step4: Take the heaviest and most valuable until it all fits
+for i in 1:length(bigger_and_valuable)
+    list_of_possible_corners = calculate_new_corners(J, knapsack)
+    add_to_knapsack(bigger_and_valuable[i], J, knapsack, list_of_possible_corners)
+end
+#    Step5: Take the lightest and most valuable if there is enough space left
+for i in 1:length(smaller_and_valuable)
+    list_of_possible_corners = calculate_new_corners(J, knapsack)
+    add_to_knapsack(smaller_and_valuable[i], J, knapsack, list_of_possible_corners)
+end
+"""
 
+"""
+#- Strategy 2 [Alternate between Rock and Sand]
+#    Step1: Order them based on Weight
+items_bigger_to_smaller =  order_items_by(items, "volume")
+#    Step2: Divide them in half
+bigger_half, smaller_half = split_in_halves(items_bigger_to_smaller)
+#    Step3: Order each half based on Value
+bigger_and_valuable = order_items_by(bigger_half, "value")
+smaller_and_valuable = order_items_by(smaller_half, "value")
+#    Step4: Repeat until there is no space left
+for i in 1:length(smaller_and_valuable)
+    list_of_possible_corners = calculate_new_corners(J, knapsack)
+    #    Step5: Take one of the heaviest and most valuable 
+    add_to_knapsack(bigger_and_valuable[i], J, knapsack, list_of_possible_corners)
+    #    Step6: Take one of the lightest and most valuable
+    add_to_knapsack(smaller_and_valuable[i], J, knapsack, list_of_possible_corners)
+end
+if length(smaller_and_valuable) < length(bigger_and_valuable)
+    list_of_possible_corners = calculate_new_corners(J, knapsack)
+    add_to_knapsack(bigger_and_valuable[length(bigger_and_valuable)], J, knapsack, list_of_possible_corners)
+end
+"""
 
+"""
+#- Strategy 3 [Putting Sand first then later Rock]
+#    Step1: Order them based on Weight
+items_bigger_to_smaller =  order_items_by(items, "volume")
+#    Step2: Divide them in half
+bigger_half, smaller_half = split_in_halves(items_bigger_to_smaller)
+#    Step3: Order each half based on Value
+bigger_and_valuable = order_items_by(bigger_half, "value")
+smaller_and_valuable = order_items_by(smaller_half, "value")
+#    Step4: Take one of the lightest and most valuable until it all fits
+for i in 1:length(smaller_and_valuable)
+    list_of_possible_corners = calculate_new_corners(J, knapsack)
+    add_to_knapsack(smaller_and_valuable[i], J, knapsack, list_of_possible_corners)
+end
+#    Step5: Take one of the heaviest and most valuable if there is enough space left
+for i in 1:length(bigger_and_valuable)
+    list_of_possible_corners = calculate_new_corners(J, knapsack)
+    add_to_knapsack(bigger_and_valuable[i], J, knapsack, list_of_possible_corners)
+end
+"""
 
+"""
+# - Strategy 7 [Just Greedy]
+#    Step1: Order them based on Value
+items_most_valuable_to_least = order_items_by("value")
+#    Step2: Take one by one from the most valuable to the least until there is no space left
+for i in 1:length(items_most_valuable_to_least)
+    list_of_possible_corners = calculate_new_corners(J, knapsack)
+    add_to_knapsack(items_most_valuable_to_least[i], J, knapsack, list_of_possible_corners)
+end
+"""
